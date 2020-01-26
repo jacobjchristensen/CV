@@ -9,6 +9,7 @@ email: "j.j.christensen@medisin.uio.no"
 twitter: jacobjchr
 github: jacobjchristensen
 date: "`r format(Sys.time(), '%B %Y')`"
+docname: "../curriculum-vitae"
 output: vitae::moderncv
 ---
 
@@ -26,8 +27,6 @@ cv_sheets <- excel_sheets(cv_path)
 cv_data <- cv_sheets %>% 
   map(~read_xlsx(path = cv_path, sheet = .x)) %>% 
   set_names(cv_sheets)
-
-options(encoding = "UTF-8")
 ```
 
 # Some stuff about me
@@ -39,6 +38,7 @@ options(encoding = "UTF-8")
 # Education
 
 ```{r}
+library(tibble)
 tribble(
   ~ Degree, ~ Year, ~ Institution, ~ Where,
   "Informal studies", "1889-91", "Flying University", "Warsaw, Poland",
@@ -66,6 +66,6 @@ tribble(
 # Publications
 
 ```{r}
-bibliography_entries("ChristensenJJ.bib")
+bibliography_entries("../ChristensenJJ.bib")
 ```
 
