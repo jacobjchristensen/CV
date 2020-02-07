@@ -9,6 +9,7 @@ email: "j.j.christensen@medisin.uio.no"
 twitter: jacobjchr
 github: jacobjchristensen
 date: "`r format(Sys.time(), '%B %Y')`"
+profilepic: headshot-jjc.jpg
 output: vitae::awesomecv
 ---
 
