@@ -36,9 +36,9 @@ cv_data <- cv_sheets %>%
 
 ```{r}
 cv_data$education %>% 
-  filter(Type %in% c("University education", "Post graduate education")) %>% 
+  filter(Type %in% c("University education")) %>% 
   arrange(desc(Date_start), desc(Date_end)) %>% 
-  detailed_entries(what = Degree, when = Year, with = Institution, where = Where, why = Details)
+  detailed_entries(what = Name, when = Year, with = Institution, where = Where, why = Details)
 ```
 
 # Work experience
