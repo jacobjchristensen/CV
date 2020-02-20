@@ -36,7 +36,7 @@ cv_data <- cv_sheets %>%
 
 ```{r}
 cv_data$education %>% 
-  filter(Type %in% c("University education")) %>% 
+  filter(Type %in% c("University education", "Post graduate education")) %>% 
   arrange(desc(Date_start), desc(Date_end)) %>% 
   detailed_entries(what = Degree, when = Year, with = Institution, where = Where, why = Details)
 ```
@@ -45,7 +45,7 @@ cv_data$education %>%
 
 ```{r}
 cv_data$experience %>% 
-  filter(Type %in% c("Professional Positions")) %>% 
+  filter(Type %in% c("Professional Positions", "Research visit abroad")) %>% 
   arrange(desc(Date_start), desc(Date_end)) %>% 
   detailed_entries(what = Position, when = Year, with = Institution, where = Where, why = Details)
 ```
@@ -59,6 +59,7 @@ cv_data$experience %>%
 # Publications
 
 ```{r}
-bibliography_entries("../ChristensenJJ.bib")
+bibliography_entries("../ChristensenJJ.bib") %>% 
+  arrange(desc(date))
 ```
 
