@@ -5,3 +5,6 @@
 
 # Ignore the archive folder
 archive/
+
+# Ignore the .bib file as this automatically updates with Zotero updates
+*.bib
