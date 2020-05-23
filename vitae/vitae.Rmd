@@ -2,14 +2,14 @@
 name: Jacob J.
 surname: Christensen
 position: "PhD, Postdoctoral Researcher"
-address: "Gaustadveien 23A, 0372 Oslo"
+address: "Gaustadveien 23A, 0372 Oslo, Norway"
 phone: +47 92 45 00 67
 www: jjchristensen.netlify.com
 email: "j.j.christensen@medisin.uio.no"
 twitter: jacobjchr
 github: jacobjchristensen
 date: "`r format(Sys.time(), '%B %Y')`"
-profilepic: headshot-jjc.jpg
+profilepic: headshot-jjc-crop.jpg
 output: vitae::awesomecv
 ---
 
@@ -21,45 +21,242 @@ library(vitae)
 library(tidyverse)
 library(readxl)
 
-# Load CV database
+# This is the CV path
 cv_path <- "../CV-log.xlsx"
+
+# These are the sheet names
 cv_sheets <- excel_sheets(cv_path)
-cv_data <- cv_sheets %>% 
-  map(~read_xlsx(path = cv_path, sheet = .x)) %>% 
+
+# These are the column names within each sheet
+cv_sheets_names <- cv_sheets %>% 
+  map(~read_xlsx(path = cv_path, 
+                 sheet = .x, 
+                 n_max = 0
+                 ) %>% names()) %>% 
+  set_names(cv_sheets)
+
+# Define column types for each column name within each sheet
+cv_sheets_col_types <- cv_sheets_names %>% 
+  map(~if_else(str_detect(string = .x, pattern = "Date"), true = "guess", false = "guess"))
+
+# Read data in sheets and set column types directly
+cv_data <- map2(cv_sheets, 
+                cv_sheets_col_types, 
+                ~read_xlsx(path = cv_path, 
+                           sheet = .x, 
+                           col_types = .y)
+                           ) %>% 
   set_names(cv_sheets)
 ```
 
- * I am a clinical dietitian and postdoctoral researcher at Oslo University Hospital and University of Oslo. 
- * My research interests include cardiovascular diseases, lipid metabolism, nutrition, genomics and data science.
+I am a clinical dietitian and postdoctoral researcher at Oslo University Hospital and University of Oslo. 
 
-# Education and authorization
+My academic interests span several topics. My main focus is how genetic and lifestyle exposures, such as variation in SNPs and dietary fatty acid consumption, affect plasma lipid levels and other cardiovascular disease (CVD) risk factors. My research involves both healthy children and adults, as well as pregnant women and families with genetically elevated cholesterol (FH). I am involved in both clinical interventions (e.g. NOMA) and epidemiological studies (e.g. MoBa and STORK), where my main responsibility is related to data analysis. For example, I apply principles of biostatistics and bioinformatics to leverage knowledge from various *omics*-type datasets to examine potential biomarkers of dietary intake or CVD risk. I particularly study the early-life exposures to elevated levels of CVD risk factors. Additionally, I am part of The Nordic Nutrition Recommendations 2022 (NNR2022) Committee, working on the update of NNR2012. 
+
+
+# Education
+
+#### University Education and Authorization
 
 ```{r}
 cv_data$education %>% 
   filter(Type %in% c("University education")) %>% 
-  arrange(desc(Date_start), desc(Date_end)) %>% 
+  arrange(desc(`Date start`), desc(`Date end`)) %>% 
   detailed_entries(what = Name, when = Year, with = Institution, where = Where, why = Details)
 ```
 
-# Work experience
+#### Selected Courses
+
+```{r}
+cv_data$education %>% 
+  filter(Type == "Courses") %>% 
+  mutate(Year = str_remove_all(Year, "esent")) %>% 
+  arrange(desc(`Date start`), desc(`Date end`)) %>% 
+  brief_entries(what = Name, when = Year, with = Institution)
+```
+
+# Work Experience
+
+#### Professional Positions
 
 ```{r}
 cv_data$experience %>% 
-  filter(Type %in% c("Professional Positions", "Research visit abroad")) %>% 
-  arrange(desc(Date_start), desc(Date_end)) %>% 
+  filter(Type %in% c("Professional Positions")) %>% 
+  arrange(desc(`Date start`), desc(`Date end`)) %>% 
   detailed_entries(what = Position, when = Year, with = Institution, where = Where, why = Details)
+```
+
+#### Other Positions
+
+```{r}
+cv_data$experience %>% 
+  filter(Type %in% c("Other Positions")) %>% 
+  arrange(desc(`Date start`), desc(`Date end`)) %>% 
+  detailed_entries(what = Position, when = Year, with = Institution, where = Where, why = Details)
+```
+
+# Publications
+
+#### Scientific Publications
+
+```{r}
+bibliography_entries("../ChristensenJJ.bib") %>% 
+  filter(is.na(series)) %>%
+  arrange(desc(date))
+```
+
+#### Other Publications
+
+```{r}
+other_publications <- c("Popular Science Articles", 
+                        "Articles, Chronicles or Commentaries", 
+                        "Expert Opinions/Statements", 
+                        "Lommelegen Q&A")
+
+cv_data$publications %>% 
+  filter(Type %in% other_publications) %>% 
+  mutate(Type = fct_relevel(Type, other_publications)) %>% 
+  arrange(Type) %>% 
+  detailed_entries(what = Title, when = Year, with = Type, why = Details)
+```
+
+# Grants and Awards
+
+```{r}
+cv_data$`grants-awards` %>% 
+  filter(!is.na(Date)) %>% 
+  arrange(desc(Date)) %>% 
+  detailed_entries(what = Title, when = Period, with = Type, where = `Source funder`, why = `Description/aim`)
 ```
 
 # Presentations
 
-## Invited speaker
-
-## Poster presentations
-
-# Publications
+#### Invited Presentations
 
 ```{r}
-bibliography_entries("../ChristensenJJ.bib") %>% 
-  arrange(desc(date))
+cv_data$presentations %>% 
+  filter(Type == "Invited presentation") %>% 
+  arrange(desc(Date)) %>% 
+  detailed_entries(what = glue::glue("{Setting} ({Where})"), 
+                   when = Period, 
+                   why = Title)
 ```
+
+#### Other Contributions
+
+```{r}
+condense_and_prep <- function(data) {
+  
+  details <- paste0(nrow(data), " contributions")
+  
+  tibble(
+    details = details, 
+    when = paste0(min(data$Year, na.rm = TRUE), "-", max(data$Year, na.rm = TRUE)), 
+    with = data$Setting %>% unique() %>% paste0(collapse = ", "), 
+    where = data$Where %>% unique() %>% paste0(collapse = "; ")
+  )
+}
+
+cv_data$presentations %>% 
+  filter(Type %in% c("Seminars", "Posters", "Moderated Posters"), 
+         Setting != "Group meeting") %>% 
+  arrange(desc(Date)) %>% 
+  group_by(Type) %>% 
+  nest() %>% 
+  mutate(res = map(data, condense_and_prep)) %>% 
+  unnest(res) %>% 
+  mutate(why = paste0(details, " for ", with, " at ", where)) %>% 
+  detailed_entries(what = Type, when = when, why = why)
+```
+
+# Activities 
+
+#### Educational Activities
+
+```{r}
+# Count similar lectures and put on one single row
+condense_and_prep <- function(data) {
+  
+  data_slice <- data %>% slice(1)
+  
+  tibble(
+    Details = paste0(nrow(data), " contributions: ", data_slice$Details), 
+    Period = paste0(min(data$Year, na.rm = TRUE), " - ", max(data$Year, na.rm = TRUE)), 
+    University = data$University %>% unique() %>% paste0(collapse = ", "), 
+    Where = data$Where %>% unique() %>% paste0(collapse = "; ")
+  )
+}
+
+# Remove those that haven't started yet
+prep <- cv_data$`educational-activities` %>% 
+  filter(`Date start` < Sys.Date())
+
+# Count lectures
+prep_lecture <- prep %>% 
+  filter(What == "Lecture") %>% 
+  group_by(What) %>% 
+  nest() %>% 
+  mutate(res = map(data, condense_and_prep)) %>% 
+  unnest(res) %>% 
+  select(-data)
+
+bind_rows(
+  prep %>% filter(What != "Lecture"), 
+  prep_lecture
+) %>% 
+  arrange(desc(`Date start`), desc(`Date end`)) %>% 
+  detailed_entries(what = glue::glue("{What} ({University})"), 
+                   when = Period, 
+                   why = Details)
+```
+
+#### Service Activities
+
+```{r}
+cv_data$`service-activities` %>% 
+  filter(
+    # Remove those that haven't started yet
+    `Date start` < Sys.Date() & 
+    
+    # Remove oldest entries
+    `Date start` > 2010
+    ) %>% 
+  arrange(desc(`Date start`), desc(`Date end`)) %>% 
+  detailed_entries(what = Position, when = Period, why = Institution)
+```
+
+#### Editorial Activities
+
+```{r}
+prep <- cv_data$`editorial-activities` %>% 
+  filter(What == "Peer Review Activities") %>% 
+  arrange(desc(IF))
+
+tibble(
+  what = prep %>% pull("What") %>% unique(), 
+  when = paste0(min(prep$Year, na.rm = TRUE), " - ", max(prep$Year, na.rm = TRUE)), 
+  why = prep %>% pull("Journal") %>% unique() %>% paste0(collapse = ", ")
+) %>% 
+  detailed_entries(what = what, when = when, why = why)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
